@@ -106,7 +106,7 @@ class _ModernMahasiswaCardState extends State<ModernMahasiswaCard>
                   ), // BoxDecoration
                   child: Center(
                     child: Text(
-                      widget.mahasiswa.nama.substring(0, 1).toUpperCase(),
+                      widget.mahasiswa.name.substring(0, 1).toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -123,7 +123,7 @@ class _ModernMahasiswaCardState extends State<ModernMahasiswaCard>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.mahasiswa.nama,
+                        widget.mahasiswa.name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -134,23 +134,18 @@ class _ModernMahasiswaCardState extends State<ModernMahasiswaCard>
                       ), // Text
                       const SizedBox(height: 8),
                       _buildInfoRow(
-                        Icons.badge_outlined,
-                        'NIM: ${widget.mahasiswa.nim}',
-                      ),
-                      const SizedBox(height: 4),
-                      _buildInfoRow(
                         Icons.email_outlined,
                         widget.mahasiswa.email,
                       ),
                       const SizedBox(height: 4),
                       _buildInfoRow(
-                        Icons.school_outlined,
-                        widget.mahasiswa.jurusan,
+                        Icons.comment_outlined,
+                        widget.mahasiswa.body,
                       ),
                       const SizedBox(height: 4),
                       _buildInfoRow(
-                        Icons.calendar_today_outlined,
-                        'Angkatan: ${widget.mahasiswa.angkatan}',
+                        Icons.tag_outlined,
+                        'Post ID: ${widget.mahasiswa.postId} | ID: ${widget.mahasiswa.id}',
                       ),
                     ],
                   ), // Column
@@ -195,24 +190,83 @@ class _ModernMahasiswaCardState extends State<ModernMahasiswaCard>
   }
 }
 
+class MahasiswaEmptyState extends StatelessWidget {
+  final VoidCallback? onRefresh;
+
+  const MahasiswaEmptyState({Key? key, this.onRefresh}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ), // BoxDecoration
+            child: Icon(
+              Icons.people_outline_rounded,
+              size: 64,
+              color: Colors.grey[400],
+            ), // Icon
+          ), // Container
+          const SizedBox(height: 24),
+          Text(
+            'Tidak ada data mahasiswa',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ), // TextStyle
+          ), // Text
+          const SizedBox(height: 8),
+          Text(
+            'Belum ada mahasiswa yang terdaftar',
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+          ), // Text
+          if (onRefresh != null) ...[
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ), // EdgeInsets.symmetric
+              ), // ElevatedButton.styleFrom
+            ), // ElevatedButton.icon
+          ],
+        ],
+      ), // Column
+    ); // Center
+  }
+}
+
 class MahasiswaListView extends StatelessWidget {
   final List<MahasiswaModel> mahasiswaList;
-  final VoidCallback? onRefresh;
+  final VoidCallback onRefresh;
   final bool useModernCard;
 
   const MahasiswaListView({
     Key? key,
     required this.mahasiswaList,
-    this.onRefresh,
+    required this.onRefresh,
     this.useModernCard = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    if (mahasiswaList.isEmpty) {
+      return MahasiswaEmptyState(onRefresh: onRefresh);
+    }
+
     return RefreshIndicator(
-      onRefresh: () async {
-        onRefresh?.call();
-      },
+      onRefresh: () async => onRefresh(),
       child: ListView.builder(
         padding: const EdgeInsets.all(AppConstants.paddingMedium),
         itemCount: mahasiswaList.length,
@@ -226,20 +280,27 @@ class MahasiswaListView extends StatelessWidget {
             return ModernMahasiswaCard(
               mahasiswa: mahasiswa,
               gradientColors: gradientColors,
-              onTap: () {},
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Detail: ${mahasiswa.name}'),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ), // SnackBar
+                );
+              },
+            ); // ModernMahasiswaCard
+          } else {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(mahasiswa.name),
+                subtitle: Text(mahasiswa.email),
+              ),
             );
           }
-
-          // Simple card fallback
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              title: Text(mahasiswa.nama),
-              subtitle: Text(mahasiswa.nim),
-            ),
-          );
         },
-      ),
-    );
+      ), // ListView.builder
+    ); // RefreshIndicator
   }
 }

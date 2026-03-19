@@ -1,58 +1,44 @@
+import 'dart:convert';
 import 'package:belajar_flutter/features/mahasiswa_aktif/data/models/mahasiswa_aktif_model.dart';
+import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 class MahasiswaAktifRepository {
-  /// Mendapatkan daftar mahasiswa aktif
-  Future<List<MahasiswaAktifModel>> getMahasiswaAktifList() async {
-    // Simulasi network delay
-    await Future.delayed(const Duration(seconds: 1));
+  final Dio _dio = Dio();
 
-    // Data dummy mahasiswa aktif
-    return [
-      MahasiswaAktifModel(
-        nama: 'Budi Santoso',
-        nim: '2021001',
-        email: 'budi.santoso@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2021',
-        semester: '7',
-        status: 'Aktif',
+  /// Mendapatkan daftar mahasiswa aktif menggunakan http
+  Future<List<MahasiswaAktifModel>> getMahasiswaAktifListHttp() async {
+    final response = await http.get(
+      Uri.parse('https://jsonplaceholder.typicode.com/posts'),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      print(data); // Debug: Tampilkan data yang sudah di-decode
+      return data.map((json) => MahasiswaAktifModel.fromJson(json)).toList();
+    } else {
+      print('Error: ${response.statusCode} - ${response.body}');
+      throw Exception('Gagal memuat data mahasiswa aktif: ${response.statusCode}');
+    }
+  }
+
+  /// Mendapatkan daftar mahasiswa aktif menggunakan dio
+  Future<List<MahasiswaAktifModel>> getMahasiswaAktifList() async {
+    final response = await _dio.get(
+      'https://jsonplaceholder.typicode.com/posts',
+      options: Options(
+        headers: {'Accept': 'application/json'},
       ),
-      MahasiswaAktifModel(
-        nama: 'Siti Rahayu',
-        nim: '2021002',
-        email: 'siti.rahayu@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2021',
-        semester: '7',
-        status: 'Aktif',
-      ),
-      MahasiswaAktifModel(
-        nama: 'Ahmad Fauzi',
-        nim: '2022001',
-        email: 'ahmad.fauzi@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2022',
-        semester: '5',
-        status: 'Aktif',
-      ),
-      MahasiswaAktifModel(
-        nama: 'Dewi Lestari',
-        nim: '2022002',
-        email: 'dewi.lestari@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2022',
-        semester: '5',
-        status: 'Aktif',
-      ),
-      MahasiswaAktifModel(
-        nama: 'Rizky Pratama',
-        nim: '2023001',
-        email: 'rizky.pratama@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2023',
-        semester: '3',
-        status: 'Aktif',
-      ),
-    ];
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = response.data;
+      print(data); // Debug: Tampilkan data yang sudah di-decode
+      return data.map((json) => MahasiswaAktifModel.fromJson(json)).toList();
+    } else {
+      print('Error: ${response.statusCode} - ${response.data}');
+      throw Exception('Gagal memuat data mahasiswa aktif: ${response.statusCode}');
+    }
   }
 }

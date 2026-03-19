@@ -107,7 +107,7 @@ class _ModernMahasiswaAktifCardState extends State<ModernMahasiswaAktifCard>
                   ), // BoxDecoration
                   child: Center(
                     child: Text(
-                      widget.mahasiswaAktif.nama
+                      widget.mahasiswaAktif.title
                           .substring(0, 1)
                           .toUpperCase(),
                       style: const TextStyle(
@@ -125,63 +125,25 @@ class _ModernMahasiswaAktifCardState extends State<ModernMahasiswaAktifCard>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              widget.mahasiswaAktif.nama,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.3,
-                              ), // TextStyle
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ), // Text
-                          ), // Expanded
-                          // Status Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Colors.green.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Text(
-                              widget.mahasiswaAktif.status,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.green,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ), // Container status badge
-                        ],
-                      ), // Row
+                      Text(
+                        widget.mahasiswaAktif.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.3,
+                        ), // TextStyle
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ), // Text
                       const SizedBox(height: 8),
                       _buildInfoRow(
-                        Icons.badge_outlined,
-                        'NIM: ${widget.mahasiswaAktif.nim}',
+                        Icons.article_outlined,
+                        widget.mahasiswaAktif.body,
                       ),
                       const SizedBox(height: 4),
                       _buildInfoRow(
-                        Icons.email_outlined,
-                        widget.mahasiswaAktif.email,
-                      ),
-                      const SizedBox(height: 4),
-                      _buildInfoRow(
-                        Icons.school_outlined,
-                        widget.mahasiswaAktif.jurusan,
-                      ),
-                      const SizedBox(height: 4),
-                      _buildInfoRow(
-                        Icons.layers_outlined,
-                        'Semester: ${widget.mahasiswaAktif.semester} | Angkatan: ${widget.mahasiswaAktif.angkatan}',
+                        Icons.tag_outlined,
+                        'User ID: ${widget.mahasiswaAktif.userId} | ID: ${widget.mahasiswaAktif.id}',
                       ),
                     ],
                   ), // Column
@@ -226,24 +188,83 @@ class _ModernMahasiswaAktifCardState extends State<ModernMahasiswaAktifCard>
   }
 }
 
+class MahasiswaAktifEmptyState extends StatelessWidget {
+  final VoidCallback? onRefresh;
+
+  const MahasiswaAktifEmptyState({Key? key, this.onRefresh}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ), // BoxDecoration
+            child: Icon(
+              Icons.people_outline_rounded,
+              size: 64,
+              color: Colors.grey[400],
+            ), // Icon
+          ), // Container
+          const SizedBox(height: 24),
+          Text(
+            'Tidak ada data mahasiswa aktif',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ), // TextStyle
+          ), // Text
+          const SizedBox(height: 8),
+          Text(
+            'Belum ada mahasiswa aktif yang terdaftar',
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+          ), // Text
+          if (onRefresh != null) ...[
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ), // EdgeInsets.symmetric
+              ), // ElevatedButton.styleFrom
+            ), // ElevatedButton.icon
+          ],
+        ],
+      ), // Column
+    ); // Center
+  }
+}
+
 class MahasiswaAktifListView extends StatelessWidget {
   final List<MahasiswaAktifModel> mahasiswaAktifList;
-  final VoidCallback? onRefresh;
+  final VoidCallback onRefresh;
   final bool useModernCard;
 
   const MahasiswaAktifListView({
     Key? key,
     required this.mahasiswaAktifList,
-    this.onRefresh,
+    required this.onRefresh,
     this.useModernCard = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    if (mahasiswaAktifList.isEmpty) {
+      return MahasiswaAktifEmptyState(onRefresh: onRefresh);
+    }
+
     return RefreshIndicator(
-      onRefresh: () async {
-        onRefresh?.call();
-      },
+      onRefresh: () async => onRefresh(),
       child: ListView.builder(
         padding: const EdgeInsets.all(AppConstants.paddingMedium),
         itemCount: mahasiswaAktifList.length,
@@ -257,22 +278,29 @@ class MahasiswaAktifListView extends StatelessWidget {
             return ModernMahasiswaAktifCard(
               mahasiswaAktif: mahasiswaAktif,
               gradientColors: gradientColors,
-              onTap: () {},
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Detail: ${mahasiswaAktif.title}'),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ), // SnackBar
+                );
+              },
+            ); // ModernMahasiswaAktifCard
+          } else {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(mahasiswaAktif.title),
+                subtitle: Text(
+                  'User ID: ${mahasiswaAktif.userId} | ID: ${mahasiswaAktif.id}',
+                ),
+              ),
             );
           }
-
-          // Simple card fallback
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              title: Text(mahasiswaAktif.nama),
-              subtitle: Text(
-                'NIM: ${mahasiswaAktif.nim} | Semester: ${mahasiswaAktif.semester}',
-              ),
-            ),
-          );
         },
-      ),
-    );
+      ), // ListView.builder
+    ); // RefreshIndicator
   }
 }

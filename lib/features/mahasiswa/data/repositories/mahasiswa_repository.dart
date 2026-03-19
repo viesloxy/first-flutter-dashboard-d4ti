@@ -1,48 +1,22 @@
+import 'dart:convert';
 import 'package:belajar_flutter/features/mahasiswa/data/models/mahasiswa_model.dart';
+import 'package:http/http.dart' as http;
 
 class MahasiswaRepository {
-  /// Mendapatkan daftar mahasiswa
+  /// Mendapatkan daftar mahasiswa menggunakan http
   Future<List<MahasiswaModel>> getMahasiswaList() async {
-    // Simulasi network delay
-    await Future.delayed(const Duration(seconds: 1));
+    final response = await http.get(
+      Uri.parse('https://jsonplaceholder.typicode.com/comments'),
+      headers: {'Accept': 'application/json'},
+    );
 
-    // Data dummy mahasiswa
-    return [
-      MahasiswaModel(
-        nama: 'Budi Santoso',
-        nim: '2021001',
-        email: 'budi.santoso@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2021',
-      ),
-      MahasiswaModel(
-        nama: 'Siti Rahayu',
-        nim: '2021002',
-        email: 'siti.rahayu@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2021',
-      ),
-      MahasiswaModel(
-        nama: 'Ahmad Fauzi',
-        nim: '2022001',
-        email: 'ahmad.fauzi@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2022',
-      ),
-      MahasiswaModel(
-        nama: 'Dewi Lestari',
-        nim: '2022002',
-        email: 'dewi.lestari@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2022',
-      ),
-      MahasiswaModel(
-        nama: 'Rizky Pratama',
-        nim: '2023001',
-        email: 'rizky.pratama@example.com',
-        jurusan: 'Teknik Informatika',
-        angkatan: '2023',
-      ),
-    ];
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      print(data); // Debug: Tampilkan data yang sudah di-decode
+      return data.map((json) => MahasiswaModel.fromJson(json)).toList();
+    } else {
+      print('Error: ${response.statusCode} - ${response.body}');
+      throw Exception('Gagal memuat data mahasiswa: ${response.statusCode}');
+    }
   }
 }
