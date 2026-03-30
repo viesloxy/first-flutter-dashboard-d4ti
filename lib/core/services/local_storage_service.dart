@@ -6,6 +6,7 @@ class LocalStorageService {
   static const String _userIdKey = 'user_id';
   static const String _usernameKey = 'username';
   static const String _savedUsersKey = 'saved_users';
+  static const String _savedMahasiswaKey = 'saved_mahasiswa';
 
   // — Token ————————————————————————————
   Future<void> saveToken(String token) async {
@@ -43,7 +44,7 @@ class LocalStorageService {
     return prefs.getString(_usernameKey);
   }
 
-  // — simpan user di list ————————————————————————————
+  // — simpan user di list (DOSEN) ————————————————————————————
   /// Tambah user ke list (tidak menghapus yang lama)
   Future<void> addUserToSavedList({
     required String userId,
@@ -70,7 +71,7 @@ class LocalStorageService {
     await prefs.setStringList(_savedUsersKey, rawList);
   }
 
-  /// Ambil semua user yang sudah disimpan
+  /// Ambil semua user yang sudah disimpan (DOSEN)
   Future<List<Map<String, String>>> getSavedUsers() async {
     final prefs = await SharedPreferences.getInstance();
     final rawList = prefs.getStringList(_savedUsersKey) ?? [];
@@ -85,7 +86,7 @@ class LocalStorageService {
     }).toList();
   }
 
-  /// delete user tertentu dari list
+  /// delete user tertentu dari list (DOSEN)
   Future<void> removeSavedUser(String userId) async {
     final prefs = await SharedPreferences.getInstance();
     final rawList = prefs.getStringList(_savedUsersKey) ?? [];
@@ -98,10 +99,71 @@ class LocalStorageService {
     await prefs.setStringList(_savedUsersKey, rawList);
   }
 
-  /// delete semua user dari list
+  /// delete semua user dari list (DOSEN)
   Future<void> clearSavedUsers() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_savedUsersKey);
+  }
+
+  // — simpan mahasiswa di list (MAHASISWA) ————————————————————————————
+  /// Tambah mahasiswa ke list (tidak menghapus yang lama)
+  Future<void> addMahasiswaToSavedList({
+    required String userId,
+    required String username,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final rawList = prefs.getStringList(_savedMahasiswaKey) ?? [];
+
+    // Cek duplikasi userId
+    final isDuplicate = rawList.any((item) {
+      final map = jsonDecode(item) as Map<String, dynamic>;
+      return map['user_id'] == userId;
+    });
+
+    if (isDuplicate) return; // Jika sudah ada, lewati
+
+    final newUser = jsonEncode({
+      'user_id': userId,
+      'username': username,
+      'saved_at': DateTime.now().toIso8601String(),
+    });
+
+    rawList.add(newUser);
+    await prefs.setStringList(_savedMahasiswaKey, rawList);
+  }
+
+  /// Ambil semua mahasiswa yang sudah disimpan (MAHASISWA)
+  Future<List<Map<String, String>>> getSavedMahasiswa() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rawList = prefs.getStringList(_savedMahasiswaKey) ?? [];
+
+    return rawList.map((item) {
+      final map = jsonDecode(item) as Map<String, dynamic>;
+      return {
+        'user_id': (map['user_id'] ?? '').toString(),
+        'username': (map['username'] ?? '').toString(),
+        'saved_at': (map['saved_at'] ?? '').toString(),
+      };
+    }).toList();
+  }
+
+  /// delete mahasiswa tertentu dari list (MAHASISWA)
+  Future<void> removeSavedMahasiswa(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final rawList = prefs.getStringList(_savedMahasiswaKey) ?? [];
+
+    rawList.removeWhere((item) {
+      final map = jsonDecode(item) as Map<String, dynamic>;
+      return map['user_id'] == userId;
+    });
+
+    await prefs.setStringList(_savedMahasiswaKey, rawList);
+  }
+
+  /// delete semua mahasiswa dari list (MAHASISWA)
+  Future<void> clearSavedMahasiswa() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_savedMahasiswaKey);
   }
 
   // — Clear All preferences————————————————————————————

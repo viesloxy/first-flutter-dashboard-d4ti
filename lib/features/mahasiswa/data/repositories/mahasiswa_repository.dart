@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'package:belajar_flutter/core/network/dio_client.dart';
 import 'package:belajar_flutter/features/mahasiswa/data/models/mahasiswa_model.dart';
-import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 
 class MahasiswaRepository {
-  final Dio _dio = Dio();
+  final DioClient _dioClient;
+
+  MahasiswaRepository({DioClient? dioClient})
+      : _dioClient = dioClient ?? DioClient();
 
   /// Mendapatkan daftar mahasiswa menggunakan http
   Future<List<MahasiswaModel>> getMahasiswaListHttp() async {
@@ -25,20 +29,14 @@ class MahasiswaRepository {
 
   /// Mendapatkan daftar mahasiswa menggunakan dio
   Future<List<MahasiswaModel>> getMahasiswaList() async {
-    final response = await _dio.get(
-      'https://jsonplaceholder.typicode.com/comments',
-      options: Options(
-        headers: {'Accept': 'application/json'},
-      ),
-    );
-
-    if (response.statusCode == 200) {
+    try {
+      final Response response = await _dioClient.dio.get('/comments');
       final List<dynamic> data = response.data;
-      print(data); // Debug: Tampilkan data yang sudah di-decode
       return data.map((json) => MahasiswaModel.fromJson(json)).toList();
-    } else {
-      print('Error: ${response.statusCode} - ${response.data}');
-      throw Exception('Gagal memuat data mahasiswa: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception(
+        'Gagal memuat data mahasiswa: ${e.response?.statusCode} - ${e.message}',
+      );
     }
   }
 }
